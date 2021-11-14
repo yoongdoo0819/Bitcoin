@@ -630,7 +630,7 @@ class S256Point(Point):
         if is_even:
             return S256Point(x, even_beta)
         else:
-            return S256Field(x, odd_beta)
+            return S256Point(x, odd_beta)
 
     def hash160(self, compressed=True):
         return hash160(self.sec(compressed))
@@ -803,6 +803,20 @@ class PrivateKeyTest(TestCase):
         sig = pk.sign(z)
         self.assertTrue(pk.point.verify(z, sig))
 
+    def test_wif(self):
+        pk = PrivateKey(2**256 - 2**199)
+        expected = 'L5oLkpV3aqBJ4BgssVAsax1iRa77G5CVYnv9adQ6Z87te7TyUdSC'
+        self.assertEqual(pk.wif(compressed=True, testnet=False), expected)
+        pk = PrivateKey(2**256 - 2**201)
+        expected = '93XfLeifX7Jx7n7ELGMAf1SUR6f9kgQs8Xke8WStMwUtrDucMzn'
+        self.assertEqual(pk.wif(compressed=False, testnet=True), expected)
+        pk = PrivateKey(0x0dba685b4511dbd3d368e5c4358a1277de9486447af7b3604a69b8d9d8b7889d)
+        expected = '5HvLFPDVgFZRK9cd4C5jcWki5Skz6fmKqi1GQJf5ZoMofid2Dty'
+        self.assertEqual(pk.wif(compressed=False, testnet=False), expected)
+        pk = PrivateKey(0x1cca23de92fd1862fb5b76e5f4f50eb082165e5191e116c18ed1a6b24be6a53f)
+        expected = 'cNYfWuhDpbNM1JWc3c6JTrtrFVxU4AGhUKgw5f93NP2QaBqmxKkg'
+        self.assertEqual(pk.wif(compressed=True, testnet=True), expected)
+        
 """
 G = S256Point(
     0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
@@ -844,3 +858,4 @@ run(S256Test('test_verify'))
 
 print("PrivateKeyTest")
 run(PrivateKeyTest('test_sign'))
+run(PrivateKeyTest('test_wif'))

@@ -246,6 +246,7 @@ class TxTest(TestCase):
         self.assertEqual(tx.fee(), 140500)
 
 
+print('TxTest')
 run(TxTest('setUpClass'))
 run(TxTest('test_parse_version'))
 run(TxTest('test_parse_inputs'))

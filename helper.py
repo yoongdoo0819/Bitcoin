@@ -3,6 +3,8 @@ import hashlib
 
 SIGHASH_ALL = 1
 BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+TWO_WEEKS = 60 * 60 * 24 * 14
+
 
 def run(test):
     suite = TestSuite()
@@ -73,7 +75,31 @@ def encode_varint(i):
     else:
         raise ValueError('integer too large: {}'.format(i))
         
-        
+def bits_to_target(bits):
+        exponent = bits[-1]
+        coefficient = little_endian_to_int(bits[:-1])
+        return coefficient * 256 ** (exponent - 3)
+
+def target_to_bits(target):
+    raw_bytes = target.to_bytes(32, 'big')
+    raw_bytes = raw_bytes.lstrip(b'\x00')
+    if raw_bytes[0] > 0x7f:
+        exponent = len(raw_bytes) + 1
+        coefficient = b'\x00' + raw_bytes[:2]
+    else:
+        exponent = len(raw_bytes)
+        coefficient = raw_bytes[:3]
+    new_bits = coefficient[::-1] + bytes([exponent])
+    return new_bits
+
+def calculate_new_bits(previous_bits, time_differential):
+    if time_differential > TWO_WEEKS * 4:
+        time_differential = TWO_WEEKS * 4
+    if time_differential < TWO_WEEKS // 4:
+        time_differential = TWO_WEEKS // 4
+    new_target = bits_to_target(previous_bits) * time_differential // TWO_WEEKS
+    return target_to_bits(new_target)   
+
 class HelperTest(TestCase):
     
     def test_little_endian_to_int(self):
@@ -100,6 +126,7 @@ class HelperTest(TestCase):
         got = encode_base58_checksum(b'\x6f' + bytes.fromhex(h160))
         self.assertEqual(got, addr)
 
+    
 
 print("HelperTest")
 run(HelperTest('test_little_endian_to_int'))
